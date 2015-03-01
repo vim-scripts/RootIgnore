@@ -40,7 +40,7 @@ function! s:WildignoreFromGitignore(gitpath, isAtRoot)
           if fullPath =~ getcwd()
             let pattern = fnamemodify(fullPath, ":.")
             if pattern =~ "/$" 
-              pattern .= "*" 
+              let pattern .= "*" 
             endif
             let igstring .= "," . pattern
           endif
@@ -74,6 +74,11 @@ function! s:WildignoreFromGitignore(gitpath, isAtRoot)
 endfunction
 
 function! s:RootIgnore()
+  if !exists("g:RootIgnoreUseHome") || g:RootIgnoreUseHome
+    let home = finddir("~", ":p:h")
+    call s:WildignoreFromGitignore(home, 1)
+  endif
+
   let gitdir = finddir(".git", ";")
   if gitdir != ""
     if gitdir == ".git" 
