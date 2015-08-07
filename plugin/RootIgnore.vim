@@ -27,7 +27,13 @@ function! s:WildignoreFromGitignore(gitpath, isAtRoot)
       if line == ''   | con | endif
       if line =~ '^!' | con | endif
 
+
       if a:isAtRoot
+        " If line starts with a '/', remove it
+        if line =~ '^/'
+          let line = substitute(line, '/', '', '')
+        endif
+
         if line =~ '/$' 
           let igstring .= "," . line . "*"
         else
@@ -80,16 +86,20 @@ function! s:RootIgnore()
   endif
 
   let gitdir = finddir(".git", ";")
-  if gitdir != ""
-    if gitdir == ".git" 
-      let gitpath = getcwd()
-      let isAtRoot = 1
-    elseif gitdir =~ "/"
-      let gitpath = fnamemodify(gitdir, ":h")
-      let isAtRoot = 0
-    endif
-    call s:WildignoreFromGitignore(gitpath, isAtRoot)
+
+  " At root
+  if gitdir == ".git" 
+    call s:WildignoreFromGitignore(getcwd(), 1)
+  " Not at root
+  elseif gitdir =~ "/"
+    call s:WildignoreFromGitignore(fnamemodify(gitdir, ":h"), 0)
+  " Not in a git folder
+  " Just check if current directory has a .gitignore
+  " If yes, add its patterns
+  elseif filereadable('.gitignore')
+    call s:WildignoreFromGitignore(".", 1)
   endif
+
 endfunction
 
 call s:RootIgnore()
